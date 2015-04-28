@@ -15,11 +15,14 @@
   (result :url))
 
 (defn get-random []
-  (parse-single-result
-   (rand-nth
-    ((api/search yelp-client
-                 {:term "restaurants"
-                  :location zipcode
-                  :limit 10
-                  :sort (rand-int 4)
-                  :radius_filter 1000}) :businesses))))
+  (let [results (api/search yelp-client
+                             {:term "restaurants"
+                              :location zipcode
+                              :limit 10
+                              :sort (rand-int 4)
+                              :radius_filter 1000})]
+    (if (nil? (results :businesses))
+      ("There was a problem. Sorry.")
+      (-> (results :businesses)
+          rand-nth
+          parse-single-result))))
