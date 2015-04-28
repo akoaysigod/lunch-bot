@@ -6,16 +6,9 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.util.response :refer [response]]
             [clojure.string :as str]
-            [gws.yelp.client :as client]
-            [gws.yelp.api :as api]))
+            [lunch-bot.yelp :as yelp]))
 
 (def slack-key (System/getenv "SLACKOUTGOING"))
-(def yelp-key (System/getenv "YELP_CONSUMER_KEY"))
-(def yelp-consumer-secret (System/getenv "YELP_CONSUMER_SECRET"))
-(def yelp-token (System/getenv "YELP_TOKEN"))
-(def yelp-token-secret (System/getenv "YELP_TOKEN_SECRET"))
-
-(def yelp-client (client/create yelp-key yelp-consumer-secret yelp-token yelp-token-secret))
 
 (defn verify-key [in-key]
   (if (= slack-key in-key) true false))
@@ -25,9 +18,9 @@
 
 (defn handle-request [body]
   (let [user (body "user_name")
-        text (rest (str/split (body "text") #" "))]
+        text (first (rest (str/split (body "text") #" ")))]
   (cond
-    (= text "random") (send-response "Yay!")
+    (= text "random") (send-response (yelp/get-random))
     :else (send-response "What do you want?")
     )))
 
@@ -46,6 +39,7 @@
 
 (def app
   (-> app-routes
+      wrap-log-request
       wrap-params
       wrap-json-response))
 
