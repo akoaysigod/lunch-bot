@@ -6,23 +6,27 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.util.response :refer [response]]
             [clojure.string :as str]
-            [lunch-bot.yelp :as yelp]))
+            [lunch-bot.yelp :as yelp]
+            [lunch-bot.vote :as vote]))
 
-(def slack-key (System/getenv "SLACKOUTGOING"))
+(def ^:private slack-key (System/getenv "SLACKOUTGOING"))
 
-(defn verify-key [in-key]
+(defn- verify-key [in-key]
   (if (= slack-key in-key) true false))
 
-(defn send-response [text]
+(defn- send-response [text]
   (response {:text text :headers {:content-type "application/json"}}))
 
-(defn handle-request [body]
+(defn- handle-request [body]
   (let [user (body "user_name")
-        text (first (rest (str/split (body "text") #" ")))]
-  (cond
-    (= text "random") (send-response (yelp/get-random))
-    :else (send-response "What do you want?")
-    )))
+        com (first (rest (str/split (body "text") #" ")))
+        text (rest (rest (str/split (body "text") #" ")))]
+    (cond
+      (= com "random") (send-response (yelp/get-random))
+      (= com "vote") (send-response (vote/start user text))
+      :else (send-response "What do you want?"))))
+
+
 
 (defroutes app-routes
   (POST "/lunch" {body :form-params}
@@ -31,7 +35,7 @@
           (send-response "Who are you even?")))
   (route/not-found "Not Found"))
 
-(defn wrap-log-request [handler]
+(defn- wrap-log-request [handler]
   "console log all the requests"
   (fn [req]
     (println req)

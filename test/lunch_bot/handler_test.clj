@@ -3,7 +3,7 @@
             [ring.mock.request :as mock]
             [lunch-bot.handler :refer :all]))
 
-(def token (System/getenv "SLACKOUTGOING"))
+(def ^:private token (System/getenv "SLACKOUTGOING"))
 
 
 
@@ -28,3 +28,9 @@
     (let [response (app (mock/request :post "/lunch" random-req))]
       (is (= (:status response) 200)))))
 
+
+(def vote-req {"user_name" "user" "text" "lunch vote first" "token" token})
+(deftest vote-test
+  (testing "first vote"
+    (let [response (app (mock/request :post "/lunch" vote-req))]
+      (is (= (:status response) 200)))))
