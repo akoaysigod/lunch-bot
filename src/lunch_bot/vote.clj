@@ -1,7 +1,6 @@
 (ns lunch-bot.vote
   (use [clojure.string :only (join)]))
 
-
 (def votes (atom {}))
 (def counter (atom 0))
 
@@ -10,10 +9,12 @@
     (cond
       (= place "") "You didn't vote for anything."
       (not (nil? (get votes user))) "You already voted."
+      (and (number? place) (not (get votes place))) "That's not a choice."
       :else
       (do
         (swap! counter inc)
         (swap! votes assoc user vote)
+        (swap! votes @counter vote)
         "Yay you voted."))))
 
 (defn start [user vote]
@@ -25,4 +26,3 @@
         (reset! counter 0)
         (swap! votes assoc :time time)))
     (parse-vote user vote)))
-
