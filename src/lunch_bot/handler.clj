@@ -22,9 +22,9 @@
         com (first (str/split (body "text") #" "))
         text (rest (str/split (body "text") #" "))]
     (cond
-      (= com "random") (send-response (yelp/get-random))
-      (= com "vote") (send-response (vote/start user text))
-      :else (send-response "What do you want?"))))
+      (= com "random") (yelp/get-random)
+      (= com "vote") (vote/start user text)
+      :else "What do you want?")))
 
 
 
@@ -32,7 +32,7 @@
   (POST "/lunch" {body :params}
         (if (verify-key (body "token"))
           (handle-request body)
-          (send-response "Who are you even?")))
+          "Who are you even?"))
   (route/not-found "Not Found"))
 
 (defn- wrap-log-request [handler]
