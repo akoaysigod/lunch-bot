@@ -9,7 +9,7 @@
             [lunch-bot.yelp :as yelp]
             [lunch-bot.vote :as vote]))
 
-(def ^:private slack-key (System/getenv "SLACKOUTGOING"))
+(def ^:private slack-key (System/getenv "SLACKSLASH"))
 
 (defn- verify-key [in-key]
   (if (= slack-key in-key) true false))
@@ -19,8 +19,8 @@
 
 (defn- handle-request [body]
   (let [user (body "user_name")
-        com (first (rest (str/split (body "text") #" ")))
-        text (rest (rest (str/split (body "text") #" ")))]
+        com (first (str/split (body "text") #" "))
+        text (rest (str/split (body "text") #" "))]
     (cond
       (= com "random") (send-response (yelp/get-random))
       (= com "vote") (send-response (vote/start user text))
@@ -29,7 +29,7 @@
 
 
 (defroutes app-routes
-  (POST "/lunch" {body :form-params}
+  (POST "/lunch" {body :params}
         (if (verify-key (body "token"))
           (handle-request body)
           (send-response "Who are you even?")))
@@ -43,7 +43,7 @@
 
 (def app
   (-> app-routes
-;;      wrap-log-request
+      wrap-log-request
       wrap-params
       wrap-json-response))
 
