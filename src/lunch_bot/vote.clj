@@ -1,20 +1,34 @@
 (ns lunch-bot.vote
   (use [clojure.string :only (join)]))
 
-(def votes (atom {}))
-(def counter (atom 0))
+(def votes (atom {:counts {}}))
+(def display (atom {}))
+(def counter (atom 1))
+
+(defn- increase-count [c v]
+  (let [n ((v :counts) c)
+        counts (v :counts)
+        exists? (if (nil? n) false true)
+        count (if exists? (inc n) 1)
+        new-counts (assoc counts c count)]
+    (swap! votes assoc :counts new-counts)))
 
 (defn- parse-vote [user vote]
-  (let [place (join " " vote)]
+  (let [place (join " " vote)
+        number (read-string place)
+        not-choice? (and (number? number) (nil? (@votes number)))
+        choice? (and (number? number) (some? (@votes number)))
+        choice (if choice? number @counter)]
     (cond
       (= place "") "You didn't vote for anything."
-      (not (nil? (get votes user))) "You already voted."
-      (and (number? (read-string place)) (not (get votes place))) "That's not a choice."
+      (not (nil? (@votes user))) "You already voted."
+      not-choice? "That's not a choice."
       :else
       (do
-        (swap! counter inc)
-        (swap! votes assoc user vote)
-        (swap! votes assoc @counter vote)
+        (if (not choice?) (swap! counter inc))
+        (if (not choice?) (swap! votes assoc choice vote))
+        (swap! votes assoc user (if choice? (@votes choice) vote))
+        (increase-count choice @votes)
         "Yay you voted."))))
 
 (defn start [user vote]
@@ -22,7 +36,7 @@
     (cond
       (or (nil? (get votes :time)) (> (- time (vote :time)) 600))
       (do
-        (reset! votes {})
+        (reset! votes {:counts {}})
         (reset! counter 0)
         (swap! votes assoc :time time)))
     (parse-vote user vote)))
