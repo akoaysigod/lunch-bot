@@ -29,7 +29,7 @@
         (if (not choice?) (swap! votes assoc choice vote))
         (swap! votes assoc user (if choice? (@votes choice) vote))
         (increase-count choice @votes)
-        "Yay you voted."))))
+        "Yay, you voted."))))
 
 (defn start [user vote]
   (let [time (quot (System/currentTimeMillis) 1000)]
