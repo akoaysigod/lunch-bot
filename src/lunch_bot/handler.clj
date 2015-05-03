@@ -30,7 +30,6 @@
 
 (defroutes app-routes
   (POST "/lunch" {body :params}
-        (print body)
         (if (verify-key (body "token"))
           (handle-request body)
           "Who are you even?"))
