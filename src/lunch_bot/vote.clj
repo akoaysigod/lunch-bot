@@ -1,9 +1,16 @@
 (ns lunch-bot.vote
-  (use [clojure.string :only (join)]))
+  (use [clojure.string :only (join)])
+  (require [lunch-bot.send :as send]))
 
 (def votes (atom {:counts {}}))
 (def display (atom {}))
 (def counter (atom 1))
+
+(defn- send-response [v counts]
+  (let [arr (seq counts)]
+    (-> 
+     (reduce #(str %1 "(" (first %2) ") " (v (first %2)) " - " (second %2) "\n") "" arr)
+     (send/send-response))))
 
 (defn- increase-count [c v]
   (let [n ((v :counts) c)
@@ -29,6 +36,7 @@
         (if (not choice?) (swap! votes assoc choice vote))
         (swap! votes assoc user (if choice? (@votes choice) vote))
         (increase-count choice @votes)
+        (send-response @votes (@votes :counts))
         "Yay, you voted."))))
 
 (defn start [user vote]
