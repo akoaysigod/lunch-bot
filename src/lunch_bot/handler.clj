@@ -17,6 +17,13 @@
 (defn- send-response [text]
   (response {:text text :headers {:content-type "application/json"}}))
 
+(defn- handle-query-request [text]
+  ;; command structure -> [category] within [increment] [unit] of [location]
+  (let [[category increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))]
+  (if (nil? category)
+    "Unparsable request"
+    (yelp/get-by-query category increment units location))))
+
 (defn- handle-request [body]
   (let [user (body "user_name")
         com (first (str/split (body "text") #" "))
@@ -24,7 +31,7 @@
     (cond
       (= com "random") (yelp/get-random)
       (= com "vote") (vote/start user text)
-      :else "What do you want?")))
+      :else (handle-query-request (body "text")))))
 
 
 

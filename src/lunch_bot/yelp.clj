@@ -28,3 +28,19 @@
           rand-nth
           parse-single-result))))
 
+;;TODO: increment + units -> radius
+;;TODO: location string or lat lng
+(defn get-by-query [category increment units location]
+  (let [results (api/search yelp-client
+                             {:term category
+                              :location location
+                              :limit 10
+                              :sort (rand-int 3)
+                              :radius_filter 1000})]
+    (if (nil? (results :businesses))
+      (do
+        (println "yelp results" results)
+        "There was a problem. Sorry.")
+      (-> (results :businesses)
+          rand-nth
+          parse-single-result))))
