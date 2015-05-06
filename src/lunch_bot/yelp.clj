@@ -1,6 +1,7 @@
 (ns lunch-bot.yelp
   (:require [gws.yelp.client :as client]
-            [gws.yelp.api :as api]))
+            [gws.yelp.api :as api]
+            [lunch-bot.send :as send]))
 
 (def ^:private yelp-key (System/getenv "YELP_CONSUMER_KEY"))
 (def ^:private yelp-consumer-secret (System/getenv "YELP_CONSUMER_SECRET"))
@@ -13,7 +14,9 @@
 (def ^:private zipcode "07302")
 
 (defn- parse-single-result [result]
-  (str (result :name) " - " (first (first (result :categories))) " - " (result :url)))
+  (->
+    (str (result :name) " - " (first (first (result :categories))) " - " (result :url))
+    (send/send-response)))
 
 (defn get-random []
   (let [results (api/search yelp-client
