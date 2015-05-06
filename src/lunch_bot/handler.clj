@@ -43,7 +43,6 @@
 
 (def app
   (-> app-routes
-      wrap-log-request
+;;      wrap-log-request
       wrap-params
       wrap-json-response))
-

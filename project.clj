@@ -6,7 +6,7 @@
                  [compojure "1.3.1"]
                  [ring/ring-defaults "0.1.2"]
                  [ring/ring-json "0.3.1"]
-                 [cheshire "5.4.0"]
+                 [org.clojure/data.json "0.2.6"]
                  [clj-http "1.1.1"]
                  [gws/clj-yelp "0.3.1"]]
 
