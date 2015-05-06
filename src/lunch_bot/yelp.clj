@@ -13,7 +13,7 @@
 (def ^:private zipcode "07302")
 
 (defn- parse-single-result [result]
-  (result :url))
+  (str (result :name) " - " (first (first (result :categories))) " - " (result :url)))
 
 (defn get-random []
   (let [results (api/search yelp-client
