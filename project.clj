@@ -13,7 +13,8 @@
   :plugins [[lein-ring "0.8.13"]
             [lein-pdo "0.1.1"]]
   :ring {:handler lunch-bot.handler/app
-         :port 20000}
+         :port 20000
+         :auto-reload? true}
   :aliases {"up" ["pdo" "ring" "server-headless"]}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
