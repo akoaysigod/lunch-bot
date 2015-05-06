@@ -16,7 +16,8 @@
 (defn- parse-single-result [result]
   (->
     (str (result :name) " - " (first (first (result :categories))) " - " (result :url))
-    (send/send-response)))
+    (send/send-response))
+    "done parse-single-result" result)
 
 (defn get-random []
   (let [results (api/search yelp-client
