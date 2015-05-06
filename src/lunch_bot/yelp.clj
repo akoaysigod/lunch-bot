@@ -20,10 +20,10 @@
                              {:term "restaurants"
                               :location zipcode
                               :limit 10
-                              :sort (rand-int 4)
+                              :sort (rand-int 3)
                               :radius_filter 1000})]
     (if (nil? (results :businesses))
-      ("There was a problem. Sorry.")
+      "There was a problem. Sorry."
       (-> (results :businesses)
           rand-nth
           parse-single-result))))
