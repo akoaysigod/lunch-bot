@@ -53,5 +53,5 @@
   ;; command structure -> [category] within [increment] [unit] of [location]
   (let [[term increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))]
   (if (nil? term)
-    "Unparsable request"
+    (str "Unparsable request " text)
     (get-by-query term increment units location))))

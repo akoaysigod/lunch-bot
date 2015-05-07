@@ -22,9 +22,10 @@
         com (first (str/split (body "text") #" "))
         text (rest (str/split (body "text") #" "))]
     (cond
-      (= com "random") (yelp/get-random)
       (= com "vote") (vote/start user text)
-      :else (yelp/handle-query-request (body "text")))))
+      (= com "random") (yelp/get-random)
+      (= com "search") (yelp/handle-query-request (clojure.string/join " " text))
+      :else "What do you want?")))
 
 (defroutes app-routes
   (POST "/lunch" {body :params}
