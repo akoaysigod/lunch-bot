@@ -34,9 +34,9 @@
 
 ;;TODO: increment + units -> radius
 ;;TODO: location string or lat lng
-(defn get-by-query [category increment units location]
+(defn- get-by-query [term increment units location]
   (let [results (api/search yelp-client
-                             {:term category
+                             {:term term
                               :location location
                               :limit 10
                               :sort (rand-int 3)
@@ -48,3 +48,10 @@
       (-> (results :businesses)
           rand-nth
           parse-single-result))))
+
+(defn handle-query-request [text]
+  ;; command structure -> [category] within [increment] [unit] of [location]
+  (let [[term increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))]
+  (if (nil? term)
+    "Unparsable request"
+    (get-by-query term increment units location))))
