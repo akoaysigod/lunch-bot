@@ -1,6 +1,7 @@
 (ns lunch-bot.yelp
   (:require [gws.yelp.client :as client]
-            [gws.yelp.api :as api]))
+            [gws.yelp.api :as api]
+            [lunch-bot.send :as send]))
 
 (def ^:private yelp-key (System/getenv "YELP_CONSUMER_KEY"))
 (def ^:private yelp-consumer-secret (System/getenv "YELP_CONSUMER_SECRET"))
@@ -13,18 +14,44 @@
 (def ^:private zipcode "07302")
 
 (defn- parse-single-result [result]
-  (result :url))
+  (->
+    (str (result :name) " - " (first (first (result :categories))) " - " (result :url))
+    (send/send-response))
+    "done parse-single-result" result)
 
 (defn get-random []
   (let [results (api/search yelp-client
                              {:term "restaurants"
                               :location zipcode
                               :limit 10
-                              :sort (rand-int 4)
+                              :sort (rand-int 3)
                               :radius_filter 1000})]
     (if (nil? (results :businesses))
-      ("There was a problem. Sorry.")
+      "There was a problem. Sorry."
       (-> (results :businesses)
           rand-nth
           parse-single-result))))
 
+;;TODO: increment + units -> radius
+;;TODO: location string or lat lng
+(defn- get-by-query [term increment units location]
+  (let [results (api/search yelp-client
+                             {:term term
+                              :location location
+                              :limit 10
+                              :sort (rand-int 3)
+                              :radius_filter 1000})]
+    (if (nil? (results :businesses))
+      (do
+        (println "yelp results" results)
+        "There was a problem. Sorry.")
+      (-> (results :businesses)
+          rand-nth
+          parse-single-result))))
+
+(defn handle-query-request [text]
+  ;; command structure -> [category] within [increment] [unit] of [location]
+  (let [[term increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))]
+  (if (nil? term)
+    (str "Unparsable request " text)
+    (get-by-query term increment units location))))
