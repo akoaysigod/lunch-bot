@@ -58,9 +58,9 @@
       :else nil)))
 
 (defn handle-query-request 
-  ;; command structure -> [category] within [increment] [unit] of [location]
+  ;; command structure -> [sort] [category] within [increment] [units] of [location]
   [text]
-  (let [[term increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))
+  (let [[sort term increment units location] (rest (re-matches #"(\.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))
         radius (convert-to-meters increment units)]
     (if (nil? term)
       (str "Unparsable request " text)
