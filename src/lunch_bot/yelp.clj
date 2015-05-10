@@ -33,20 +33,21 @@
           parse-single-result))))
 
 ;;TODO: location string or lat lng
-(defn- get-by-query [term increment units location]
+(defn- get-by-query [term radius location]
   (let [results (api/search yelp-client
                              {:term term
                               :location location
                               :limit 10
                               :sort (rand-int 3)
-                              :radius_filter 1000})]
+                              :radius_filter radius})]
     (if (nil? (results :businesses))
       (do
         (println "yelp results" results)
         (str "There was a problem: " (get-in results [:error :text] "Sorry."))
       (-> (results :businesses)
           rand-nth
-          parse-single-result))))
+          parse-single-result)))))
+
 (defn- convert-to-meters [increment units]
   (let [units (clojure.string/lower-case units)
         increment (Integer/parseInt increment)]
