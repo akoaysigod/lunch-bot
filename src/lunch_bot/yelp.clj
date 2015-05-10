@@ -57,9 +57,11 @@
       (or (re-matches #"kilometers*" units) (= units "km")) (* 1000 increment)
       :else nil)))
 
-(defn handle-query-request [text]
+(defn handle-query-request 
   ;; command structure -> [category] within [increment] [unit] of [location]
-  (let [[term increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))]
-  (if (nil? term)
-    (str "Unparsable request " text)
-    (get-by-query term increment units location))))
+  [text]
+  (let [[term increment units location] (rest (re-matches #"(\w+) within (\d+) (\w+) of (.+)" text))
+        radius (convert-to-meters increment units)]
+    (if (nil? term)
+      (str "Unparsable request " text)
+      (get-by-query term radius location))))
