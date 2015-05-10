@@ -12,6 +12,11 @@
   (client/create yelp-key yelp-consumer-secret yelp-token yelp-token-secret))
 
 (def ^:private zipcode "07302")
+(def ^:private default-params {:term "restaurants"
+                               :location zipcode
+                               :limit 10
+                               :sort (rand-int 3)
+                               :radius_filter 1000})
 
 (defn- parse-single-result [result]
   (->
@@ -20,12 +25,7 @@
     "done parse-single-result" result)
 
 (defn get-random []
-  (let [results (api/search yelp-client
-                             {:term "restaurants"
-                              :location zipcode
-                              :limit 10
-                              :sort (rand-int 3)
-                              :radius_filter 1000})]
+  (let [results (api/search yelp-client default-params)]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
       (-> (results :businesses)
