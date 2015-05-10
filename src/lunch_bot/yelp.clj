@@ -43,7 +43,7 @@
     (if (nil? (results :businesses))
       (do
         (println "yelp results" results)
-        "There was a problem. Sorry.")
+        (str "There was a problem: " (get-in results [:error :text] "Sorry."))
       (-> (results :businesses)
           rand-nth
           parse-single-result))))
