@@ -32,7 +32,6 @@
           rand-nth
           parse-single-result))))
 
-;;TODO: increment + units -> radius
 ;;TODO: location string or lat lng
 (defn- get-by-query [term increment units location]
   (let [results (api/search yelp-client
@@ -48,6 +47,14 @@
       (-> (results :businesses)
           rand-nth
           parse-single-result))))
+(defn- convert-to-meters [increment units]
+  (let [units (clojure.string/lower-case units)
+        increment (Integer/parseInt increment)]
+    (cond
+      (or (re-matches #"miles*" units) (= units "mi")) (* 1609 increment)
+      (or (re-matches #"meters*" units) (= units "m")) (* 1 increment)
+      (or (re-matches #"kilometers*" units) (= units "km")) (* 1000 increment)
+      :else nil)))
 
 (defn handle-query-request [text]
   ;; command structure -> [category] within [increment] [unit] of [location]
