@@ -50,6 +50,7 @@
   (let [units (clojure.string/lower-case units)
         increment (Integer/parseInt increment)]
     (cond
+      (or (nil? increment) (nil? units)) nil
       (or (re-matches #"miles*" units) (= units "mi")) (* 1609 increment)
       (or (re-matches #"meters*" units) (= units "m")) (* 1 increment)
       (or (re-matches #"kilometers*" units) (= units "km")) (* 1000 increment)
@@ -59,6 +60,7 @@
   ;; Convert english sort criteria to yelp sort mode digit
   [sort-text]
   (cond
+      (nil? sort-text) nil
       (re-matches #"best" sort-text) (yelp-sort-options :best)
       (re-matches #"closest" sort-text) (yelp-sort-options :distance)
       (re-matches #"highest.rated" sort-text) (yelp-sort-options :highest-rated)
