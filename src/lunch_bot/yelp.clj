@@ -18,7 +18,7 @@
 (def ^:private default-params {:term "restaurants"
                                :location zipcode
                                :limit 10
-                               :sort (rand-int 3)
+                               :sort 0
                                :radius_filter 1000})
 
 (defn- parse-single-result [result]
@@ -28,7 +28,7 @@
     "done parse-single-result" result)
 
 (defn get-random []
-  (let [results (api/search yelp-client default-params)]
+  (let [results (api/search yelp-client (merge default-params {:sort (rand-int 3)}))]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
       (-> (results :businesses)
