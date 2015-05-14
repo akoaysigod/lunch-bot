@@ -69,9 +69,9 @@
 (defn handle-query-request
   ;; Command structure -> [sort-text] [category] within [increment] [units] of [location]
   [text]
-  (let [[sort-text term increment units location] (rest (re-matches #"(\.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))
-        radius (or (convert-to-meters increment units) (default-params :radius_filter))
-        sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))]
+  (let [[sort-text term increment units location] (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))]
     (if (nil? term)
       (str "Unparsable request " text)
-      (get-by-query {:term term :radius_filter radius :location location :sort sort-mode}))))
+      (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
+            sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))]
+            (get-by-query {:term term :radius_filter radius :location location :sort sort-mode})))))
