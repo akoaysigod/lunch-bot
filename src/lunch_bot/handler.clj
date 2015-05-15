@@ -23,8 +23,8 @@
         text (rest (str/split (body "text") #" "))]
     (cond
       (= com "vote") (vote/start user text)
-      (= com "random") (yelp/get-random)
-      (= com "search") (yelp/handle-query-request (clojure.string/join " " text))
+      (= com "random") (yelp/get-random user com)
+      (= com "search") (yelp/handle-query-request user com (clojure.string/join " " text))
       :else "What do you want?")))
 
 (defroutes app-routes

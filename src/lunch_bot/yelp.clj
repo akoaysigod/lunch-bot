@@ -21,30 +21,26 @@
                                :sort 0
                                :radius_filter 1000})
 
-(defn- parse-single-result [result]
+(defn- parse-single-result [user task-description result]
   (->
-    (str (result :name) " - " (first (first (result :categories))) " - " (result :url))
+    (str user " said \"" task-description "\". results:\n" (result :name) " - " (first (first (result :categories))) " - " (result :url))
     (send/send-response))
     "done parse-single-result" result)
 
-(defn get-random []
+(defn get-random [user task-description]
   (let [results (api/search yelp-client (merge default-params {:sort (rand-int 3)}))]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
-      (-> (results :businesses)
-          rand-nth
-          parse-single-result))))
+      (parse-single-result user task-description (rand-nth (results :businesses))))))
 
 ;;TODO: location string or lat lng
-(defn- get-by-query [params]
+(defn- get-by-query [user task-description params]
   (let [results (api/search yelp-client (merge default-params params))]
     (if (nil? (results :businesses))
       (do
         (println "yelp results w/o businesses:" results)
         (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-      (-> (results :businesses)
-          rand-nth
-          parse-single-result))))
+      (parse-single-result user task-description (rand-nth (results :businesses))))))
 
 (defn- convert-to-meters [increment units]
   (let [units (clojure.string/lower-case units)
@@ -68,10 +64,11 @@
 
 (defn handle-query-request
   ;; Command structure -> [sort-text] [category] within [increment] [units] of [location]
-  [text]
+  [user command text]
   (let [[sort-text term increment units location] (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))]
     (if (nil? term)
       (str "Unparsable request " text)
       (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
-            sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))]
-            (get-by-query {:term term :radius_filter radius :location location :sort sort-mode})))))
+            sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
+            task-description (str command " " text)]
+            (get-by-query user task-description {:term term :radius_filter radius :location location :sort sort-mode})))))
