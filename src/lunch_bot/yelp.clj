@@ -30,12 +30,6 @@
                            :sort sort
                            :radius_filter radius-filter}))
 
-(defn- parse-single-result [user task-description result]
-  (->
-    (str user " said \"" task-description "\". results:\n" (result :name) " - " (first (first (result :categories))) " - " (result :url))
-    (send/send-response))
-    "done parse-single-result" result)
-
 (defn- parse-single [result]
   (let [url (result :url)
         name (result :name)
@@ -89,29 +83,30 @@
          :sort sort})))
 
 ;;TODO: location string or lat lng
-(defn- get-by-query [user task-description params]
-  (let [results (api/search yelp-client (merge default-params params))]
-    (if (nil? (results :businesses))
-      (do
-        (println "yelp results w/o businesses:" results)
-        (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-      (parse-single (first (results :businesses))))))
+;; (defn- get-by-query [user task-description params]
+;;   (let [results (api/search yelp-client (merge default-params params))]
+;;     (if (nil? (results :businesses))
+;;       (do
+;;         (println "yelp results w/o businesses:" results)
+;;         (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
+;;       (parse-single (first (results :businesses))))))
 
-;;this is probably not needed
-(defn- get-by-query-test [params]
+(defn- get-by-query[params]
   (let [{term :term radius :radius_filter location :location sort :sort} params
         results (yelp-query :term term :radius_filter
                             radius :location location :sort sort)]
-    (println results)))
+    ;;^this is still pretty ugly
+    (if (nil? (results :businesses))
+      (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
+    (parse-single (first (results :businesses)))))
 
 (defn handle-query-request
   "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
   (let [parsed (pares-query text)]
     (if (nil? parsed) (str "Unable to parse " text)
-    (get-by-query user command
+    (get-by-query
                   {:term (parsed :term)
                    :radius_filter (parsed :radius_filter)
                    :location (parsed :location)
-                   :sort (parsed :sort)})))) ;;this works but I don't know why :(
-
+                   :sort (parsed :sort)})))) 
