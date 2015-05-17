@@ -25,9 +25,8 @@
                    :image_url yelp-logo}]]
     (map #(assoc % :color "af0606") branding)))
 
-(defn send-response-attachment [resp attachment]
-  (let [text {:text resp}
-        add-user (assoc text :username "lunch-bot") ;;is there a better way to handle this?
+(defn send-attachment [attachment]
+  (let [add-user {:username "lunch-bot"} ;;is there a better way to handle this?
         add-hamburger (assoc add-user :icon_emoji ":hamburger:")
         add-attachments (assoc add-hamburger :attachments attachment)
         payload {:form-params

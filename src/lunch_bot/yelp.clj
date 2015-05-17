@@ -46,8 +46,7 @@
         category (first (first (result :categories)))
         address (clojure.string/join " "((result :location) :display_address))
         phone (result :display_phone)]
-    (send/send-response-attachment
-     (str category " from " name " at " address "\n")
+    (send/send-attachment
      (send/yelp-branding name url category address rating-img review-count rating))))
 
 (defn get-random [user task-description]
