@@ -17,7 +17,7 @@
 (def ^:private zipcode "07302")
 (def ^:private default-params {:term "restaurants"
                                :location zipcode
-                               :limit 10
+                               :limit 3
                                :sort 0
                                :radius_filter 1000})
 
