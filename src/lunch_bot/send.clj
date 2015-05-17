@@ -32,10 +32,3 @@
         payload {:form-params
                  {:payload (json/write-str add-attachments)}}]
   (client/post slack-url payload)))
-
-(defn send-attachment []
-  [{:fallback "test"
-    :image_url "http://s3-media4.fl.yelpcdn.com/assets/2/www/img/c2f3dd9799a5/ico/stars/v1/stars_4.png"}
-   {:fallback "powered by yelp"
-    :text "Powered by: "
-    :image_url yelp-logo}])

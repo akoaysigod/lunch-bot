@@ -43,6 +43,14 @@
     (send/send-attachment
      (send/yelp-branding name url category address rating-img review-count rating))))
 
+;; (defn get-random [user com]
+;;   (->
+;;    (yelp-query :sort (rand-int 3))
+;;    (:businesses)
+;;    (rand-nth)
+;;    (parse-single)
+;;   ))
+
 (defn get-random [user task-description]
   (let [results (yelp-query :sort (rand-int 3))]
     (if (nil? (results :businesses))
@@ -50,7 +58,7 @@
       (parse-single (rand-nth (results :businesses))))))
 
 (defn- convert-to-meters [increment units]
-  (let [units (if (nil? units) "miles" (clojure.string/lower-case units))
+  (let [units (if (nil? units) "kilometers" (clojure.string/lower-case units))
         increment (Integer/parseInt increment)]
     ;;^might be a better way to hadle this 
     (cond
@@ -91,7 +99,7 @@
 ;;         (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
 ;;       (parse-single (first (results :businesses))))))
 
-(defn- get-by-query[params]
+(defn- get-by-query [params]
   (let [{term :term radius :radius_filter location :location sort :sort} params
         results (yelp-query :term term :radius_filter
                             radius :location location :sort sort)]
@@ -103,7 +111,7 @@
 (defn handle-query-request
   "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
-  (let [parsed (pares-query text)]
+  (let [parsed (parse-query text)]
     (if (nil? parsed) (str "Unable to parse " text)
     (get-by-query
                   {:term (parsed :term)
