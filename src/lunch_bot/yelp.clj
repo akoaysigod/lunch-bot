@@ -87,14 +87,18 @@
 (defn handle-query-request
   "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
-  (let [[sort-text term increment units location] (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))]
+  (let [[limit-text sort-text term increment units location]
+        (rest
+         (re-matches #"(top \d+ )*(best |closest |highest.rated )*(\w+\s*) within (\d+) (\w+) of (.+)" text))]
     (if (nil? term)
       (str "Unparsable request " text)
       (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
             sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
+            limit (or (limit-text-to-limit limit-text) (default-params :limit))
             task-description (str command " " text)]
             (get-by-query user task-description
                           {:term term
+                           :limit limit
                            :radius_filter radius
                            :location location
                            :sort sort-mode})))))
