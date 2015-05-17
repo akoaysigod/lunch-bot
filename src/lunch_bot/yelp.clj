@@ -55,18 +55,10 @@
       "There was a problem. Sorry."
       (parse-single (rand-nth (results :businesses))))))
 
-;;TODO: location string or lat lng
-(defn- get-by-query [user task-description params]
-  (let [results (api/search yelp-client (merge default-params params))]
-    (if (nil? (results :businesses))
-      (do
-        (println "yelp results w/o businesses:" results)
-        (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-      (parse-single-result user task-description (rand-nth (results :businesses))))))
-
 (defn- convert-to-meters [increment units]
-  (let [units (clojure.string/lower-case units)
+  (let [units (if (nil? units) "miles" (clojure.string/lower-case units))
         increment (Integer/parseInt increment)]
+    ;;^might be a better way to hadle this 
     (cond
       (or (nil? increment) (nil? units)) nil
       (or (re-matches #"miles*" units) (= units "mi")) (* 1609 increment)
@@ -84,13 +76,42 @@
       (re-matches #"highest.rated" sort-text) (yelp-sort-options :highest-rated)
       :else nil))
 
+(defn- parse-query [text]
+  (let [[sort-text term increment units location]
+        (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))
+
+        radius (or (convert-to-meters increment units) (default-params :radius_filter))
+        sort (or (sort-text-to-mode sort-text) (default-params :sort))]
+    (if (nil? term) nil
+        {:term term
+         :radius_filter radius
+         :location location
+         :sort sort})))
+
+;;TODO: location string or lat lng
+(defn- get-by-query [user task-description params]
+  (let [results (api/search yelp-client (merge default-params params))]
+    (if (nil? (results :businesses))
+      (do
+        (println "yelp results w/o businesses:" results)
+        (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
+      (parse-single (first (results :businesses))))))
+
+;;this is probably not needed
+(defn- get-by-query-test [params]
+  (let [{term :term radius :radius_filter location :location sort :sort} params
+        results (yelp-query :term term :radius_filter
+                            radius :location location :sort sort)]
+    (println results)))
+
 (defn handle-query-request
   "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
-  (let [[sort-text term increment units location] (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))]
-    (if (nil? term) (str "Unparsable request " text)
-        (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
-              sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
-              task-description (str command " " text)]
-          (get-by-query user task-description {:term term :radius_filter radius :location location :sort sort-mode})))))
+  (let [parsed (pares-query text)]
+    (if (nil? parsed) (str "Unable to parse " text)
+    (get-by-query user command
+                  {:term (parsed :term)
+                   :radius_filter (parsed :radius_filter)
+                   :location (parsed :location)
+                   :sort (parsed :sort)})))) ;;this works but I don't know why :(
 
