@@ -21,17 +21,40 @@
                                :sort 0
                                :radius_filter 1000})
 
+(defn- yelp-query
+  [& {:keys [term location limit sort radius-filter]
+      :or {term "restaurant" location zipcode limit 10 sort 0 radius-filter 1000}}]
+  (api/search yelp-client {:term term
+                           :location location
+                           :limit limit
+                           :sort sort
+                           :radius_filter radius-filter}))
+
 (defn- parse-single-result [user task-description result]
   (->
     (str user " said \"" task-description "\". results:\n" (result :name) " - " (first (first (result :categories))) " - " (result :url))
     (send/send-response))
     "done parse-single-result" result)
 
+(defn- parse-single [result]
+  (let [url (result :url)
+        name (result :name)
+        rating-img (result :rating_img_url)
+        rating (result :rating)
+        review-count (result :review_count)
+        food-image (result :image_url)
+        category (first (first (result :categories)))
+        address (clojure.string/join " "((result :location) :display_address))
+        phone (result :display_phone)]
+    (send/send-response-attachment
+     (str category " from " name " at " address "\n")
+     (send/yelp-branding name url category address rating-img review-count rating))))
+
 (defn get-random [user task-description]
-  (let [results (api/search yelp-client (merge default-params {:sort (rand-int 3)}))]
+  (let [results (yelp-query :sort (rand-int 3))]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
-      (parse-single-result user task-description (rand-nth (results :businesses))))))
+      (parse-single (rand-nth (results :businesses))))))
 
 ;;TODO: location string or lat lng
 (defn- get-by-query [user task-description params]
@@ -53,7 +76,7 @@
       :else nil)))
 
 (defn- sort-text-to-mode
-  ;; Convert english sort criteria to yelp sort mode digit
+  "Convert english sort criteria to yelp sort mode digit"
   [sort-text]
   (cond
       (nil? sort-text) nil
@@ -63,12 +86,12 @@
       :else nil))
 
 (defn handle-query-request
-  ;; Command structure -> [sort-text] [category] within [increment] [units] of [location]
+  "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
   (let [[sort-text term increment units location] (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))]
-    (if (nil? term)
-      (str "Unparsable request " text)
-      (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
-            sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
-            task-description (str command " " text)]
-            (get-by-query user task-description {:term term :radius_filter radius :location location :sort sort-mode})))))
+    (if (nil? term) (str "Unparsable request " text)
+        (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
+              sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
+              task-description (str command " " text)]
+          (get-by-query user task-description {:term term :radius_filter radius :location location :sort sort-mode})))))
+
