@@ -65,12 +65,14 @@
 (defn- sort-text-to-mode
   "Converts English sort criteria to yelp sort mode digit"
   [sort-text]
-  (cond
-      (nil? sort-text) nil
+  (if (nil? sort-text)
+   nil
+   (let [sort-text (clojure.string/trim sort-text)]
+    (cond
       (re-matches #"best" sort-text) (yelp-sort-options :best)
       (re-matches #"closest" sort-text) (yelp-sort-options :distance)
       (re-matches #"highest.rated" sort-text) (yelp-sort-options :highest-rated)
-      :else nil))
+      :else nil))))
 
 (defn handle-query-request
   "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
