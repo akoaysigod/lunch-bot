@@ -27,6 +27,16 @@
     (send/send-response))
     "done parse-single-result" result)
 
+(defn- parse-result [result]
+  (str (result :name) " - " (first (first (result :categories))) " - " (result :url)))
+
+(defn- send-response [user task-description results]
+  (let [parsed-results (map parse-result results)]
+    (->
+      (str user " said \"" task-description "\". results:\n" (clojure.string/join "\n" parsed-results))
+      (send/send-response))
+      "done send-response"))
+
 (defn get-random [user task-description]
   (let [results (api/search yelp-client (merge default-params {:sort (rand-int 3)}))]
     (if (nil? (results :businesses))
@@ -40,7 +50,7 @@
       (do
         (println "yelp results w/o businesses:" results)
         (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-      (parse-single-result user task-description (rand-nth (results :businesses))))))
+      (send-response user task-description (results :businesses)))))
 
 (defn- convert-to-meters [increment units]
   (let [units (clojure.string/lower-case units)
@@ -71,4 +81,8 @@
       (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
             sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
             task-description (str command " " text)]
-            (get-by-query user task-description {:term term :radius_filter radius :location location :sort sort-mode})))))
+            (get-by-query user task-description
+                          {:term term
+                           :radius_filter radius
+                           :location location
+                           :sort sort-mode})))))
