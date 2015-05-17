@@ -63,7 +63,7 @@
       :else nil)))
 
 (defn- sort-text-to-mode
-  ;; Convert english sort criteria to yelp sort mode digit
+  "Converts English sort criteria to yelp sort mode digit"
   [sort-text]
   (cond
       (nil? sort-text) nil
@@ -73,7 +73,7 @@
       :else nil))
 
 (defn handle-query-request
-  ;; Command structure -> [sort-text] [category] within [increment] [units] of [location]
+  "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
   (let [[sort-text term increment units location] (rest (re-matches #"(.+\s)*(\w+) within (\d+) (\w+) of (.+)" text))]
     (if (nil? term)
