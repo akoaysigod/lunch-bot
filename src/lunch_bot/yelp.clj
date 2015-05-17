@@ -74,6 +74,16 @@
       (re-matches #"highest.rated" sort-text) (yelp-sort-options :highest-rated)
       :else nil))))
 
+(defn- limit-text-to-limit
+  "Converts English limit criteria (ex \"top 5\") to integer"
+  [limit-text]
+  (if (nil? limit-text)
+    nil
+    (let [limit-text (clojure.string/trim limit-text)
+          [adjective limit] (rest (re-matches #"(\w+) (\d+)" limit-text))]
+       (Integer/parseInt limit))))
+
+
 (defn handle-query-request
   "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
   [user command text]
