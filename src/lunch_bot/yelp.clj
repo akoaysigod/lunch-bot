@@ -21,11 +21,27 @@
                                :sort 0
                                :radius_filter 1000})
 
-(defn- parse-single-result [user task-description result]
-  (->
-    (str user " said \"" task-description "\". results:\n" (result :name) " - " (first (first (result :categories))) " - " (result :url))
-    (send/send-response))
-    "done parse-single-result" result)
+(defn- yelp-query
+  [& {:keys [term location limit sort radius-filter]
+      :or {term "restaurant" location zipcode limit 10 sort 0 radius-filter 1000}}]
+  (api/search yelp-client {:term term
+                           :location location
+                           :limit limit
+                           :sort sort
+                           :radius_filter radius-filter}))
+
+(defn- parse-single [result]
+  (let [url (result :url)
+        name (result :name)
+        rating-img (result :rating_img_url)
+        rating (result :rating)
+        review-count (result :review_count)
+        food-image (result :image_url)
+        category (first (first (result :categories)))
+        address (clojure.string/join " "((result :location) :display_address))
+        phone (result :display_phone)]
+    (send/send-attachment
+     (send/yelp-branding name url category address rating-img review-count rating))))
 
 (defn- parse-result [result]
   (str (result :name) " - " (first (first (result :categories))) " - " (result :url)))
@@ -38,23 +54,15 @@
       "done send-response"))
 
 (defn get-random [user task-description]
-  (let [results (api/search yelp-client (merge default-params {:sort (rand-int 3)}))]
+  (let [results (yelp-query :sort (rand-int 3))]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
-      (parse-single-result user task-description (rand-nth (results :businesses))))))
-
-;;TODO: location string or lat lng
-(defn- get-by-query [user task-description params]
-  (let [results (api/search yelp-client (merge default-params params))]
-    (if (nil? (results :businesses))
-      (do
-        (println "yelp results w/o businesses:" results)
-        (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-      (send-response user task-description (results :businesses)))))
+      (parse-single (rand-nth (results :businesses))))))
 
 (defn- convert-to-meters [increment units]
-  (let [units (clojure.string/lower-case units)
+  (let [units (if (nil? units) "kilometers" (clojure.string/lower-case units))
         increment (Integer/parseInt increment)]
+    ;;^might be a better way to hadle this
     (cond
       (or (nil? increment) (nil? units)) nil
       (or (re-matches #"miles*" units) (= units "mi")) (* 1609 increment)
@@ -84,21 +92,32 @@
        (Integer/parseInt limit))))
 
 
-(defn handle-query-request
-  "Command structure -> [sort-text] [category] within [increment] [units] of [location]"
-  [user command text]
+(defn- parse-query [text]
+  "Command structure -> [limit-text] [sort-text] [category] within [increment] [units] of [location]"
   (let [[limit-text sort-text term increment units location]
-        (rest
-         (re-matches #"(top \d+ )*(best |closest |highest.rated )*(\w+\s*) within (\d+) (\w+) of (.+)" text))]
-    (if (nil? term)
-      (str "Unparsable request " text)
-      (let [radius (or (convert-to-meters increment units) (default-params :radius_filter))
-            sort-mode (or (sort-text-to-mode sort-text) (default-params :sort))
-            limit (or (limit-text-to-limit limit-text) (default-params :limit))
-            task-description (str command " " text)]
-            (get-by-query user task-description
-                          {:term term
-                           :limit limit
-                           :radius_filter radius
-                           :location location
-                           :sort sort-mode})))))
+        (rest (re-matches #"(top \d+ )*(best |closest |highest.rated )*(\w+\s*) within (\d+) (\w+) of (.+)" text))
+        radius (or (convert-to-meters increment units) (default-params :radius_filter))
+        limit (or (limit-text-to-limit limit-text) (default-params :limit))
+        sort (or (sort-text-to-mode sort-text) (default-params :sort))]
+    (if (nil? term) nil
+        {:term term
+         :limit limit
+         :radius_filter radius
+         :location location
+         :sort sort})))
+
+
+(defn- get-by-query [params]
+  (let [{term :term radius :radius_filter location :location sort :sort limit :limit} params
+        results (yelp-query :term term :radius_filter
+                            radius :location location :sort sort :limit limit)]
+    ;;^this is still pretty ugly
+    (if (nil? (results :businesses))
+      (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
+    (parse-single (first (results :businesses)))))
+
+(defn handle-query-request
+  [user command text]
+  (let [parsed (parse-query text)]
+    (if (nil? parsed) (str "Unable to parse " text)
+    (get-by-query parsed))))

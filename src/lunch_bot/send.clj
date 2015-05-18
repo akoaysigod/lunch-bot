@@ -3,6 +3,7 @@
            [clojure.data.json :as json]))
 
 (def ^:private slack-url (System/getenv "SLACKURL"))
+(def ^:private yelp-logo "https://s3-media3.fl.yelpassets.com/assets/2/www/img/2d7ab232224f/developers/yelp_logo_100x50.png")
 
 (defn send-response [resp]
   (let [text {:text resp}
@@ -11,3 +12,23 @@
         payload {:form-params {:payload (json/write-str add-hamburger)}}]
   (client/post slack-url payload)))
 
+(defn yelp-branding [name url category address stars-url review-count rating]
+  (let [branding [{:fallback url
+                   :title name
+                   :title_link url
+                   :text (str category " at " address)}
+                  {:fallback (str url stars-url review-count rating)
+                   :text (str rating " based on " review-count " reviews.")
+                   :image_url stars-url}
+                  {:fallback "Powered by Yelp."
+                   :text "Powered by: "
+                   :image_url yelp-logo}]]
+    (map #(assoc % :color "af0606") branding)))
+
+(defn send-attachment [attachment]
+  (let [add-user {:username "lunch-bot"} ;;is there a better way to handle this?
+        add-hamburger (assoc add-user :icon_emoji ":hamburger:")
+        add-attachments (assoc add-hamburger :attachments attachment)
+        payload {:form-params
+                 {:payload (json/write-str add-attachments)}}]
+  (client/post slack-url payload)))
