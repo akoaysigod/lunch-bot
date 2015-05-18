@@ -95,7 +95,7 @@
 (defn- parse-query [text]
   "Command structure -> [limit-text] [sort-text] [category] within [increment] [units] of [location]"
   (let [[limit-text sort-text term increment units location]
-        (rest (re-matches #"(top \d+ )*(best |closest |highest.rated )*(\w+\s*) within (\d+) (\w+) of (.+)" text))
+        (rest (re-matches #"(top \d+ )*(best |closest |highest.rated )*(.+) within (\d+) (\w+) of (.+)" text))
         radius (or (convert-to-meters increment units) (default-params :radius_filter))
         limit (or (limit-text-to-limit limit-text) (default-params :limit))
         sort (or (sort-text-to-mode sort-text) (default-params :sort))]
