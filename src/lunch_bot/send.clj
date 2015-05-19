@@ -16,9 +16,7 @@
   (let [branding [{:fallback url
                    :title name
                    :title_link url
-                   :text (str category " at " address)}
-                  {:fallback (str url stars-url review-count rating)
-                   :text (str rating " based on " review-count " reviews.")
+                   :text (str category " at " address "\n" rating " based on " review-count " reviews.")
                    :image_url stars-url}
                   {:fallback "Powered by Yelp."
                    :text "Powered by: "
