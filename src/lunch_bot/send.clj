@@ -17,16 +17,20 @@
                    :title name
                    :title_link url
                    :text (str category " at " address "\n" rating " based on " review-count " reviews.")
-                   :image_url stars-url}
-                  {:fallback "Powered by Yelp."
-                   :text "Powered by: "
-                   :image_url yelp-logo}]]
+                   :image_url stars-url}]]
     (map #(assoc % :color "af0606") branding)))
+
+(def ^:private yelp-logo
+  {:fallback "Powered by Yelp."
+   :text "Powered by: "
+   :image_url yelp-logo
+   :color "af0606"})
 
 (defn send-attachment [attachment]
   (let [add-user {:username "lunch-bot"} ;;is there a better way to handle this?
         add-hamburger (assoc add-user :icon_emoji ":hamburger:")
-        add-attachments (assoc add-hamburger :attachments attachment)
+        add-attachments (assoc add-hamburger :attachments (concat attachment yelp-logo))
         payload {:form-params
                  {:payload (json/write-str add-attachments)}}]
   (client/post slack-url payload)))
+

@@ -67,7 +67,7 @@
 (defn- convert-to-meters [increment units]
   (let [units (if (nil? units) "kilometers" (clojure.string/lower-case units))
         increment (Integer/parseInt increment)]
-    ;;^might be a better way to hadle this
+    ;;^might be a better way to handle this
     (cond
       (or (nil? increment) (nil? units)) nil
       (or (re-matches #"miles*" units) (= units "mi")) (* 1609 increment)
