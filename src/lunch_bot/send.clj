@@ -29,7 +29,7 @@
 (defn send-attachment [attachment]
   (let [add-user {:username "lunch-bot"} ;;is there a better way to handle this?
         add-hamburger (assoc add-user :icon_emoji ":hamburger:")
-        add-attachments (assoc add-hamburger :attachments (concat attachment  [yelp-logo]))
+        add-attachments (assoc add-hamburger :attachments (concat attachment [yelp-logo]))
         payload {:form-params
                  {:payload (json/write-str add-attachments)}}]
   (client/post slack-url payload)))
