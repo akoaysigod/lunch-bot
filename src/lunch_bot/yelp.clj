@@ -117,7 +117,7 @@
     ;;^this is still pretty ugly
     (if (nil? (results :businesses))
       (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-    (send-multi (results :businesses))))
+    (results :businesses)))
 
 (defn handle-query-request
   [user command text]
