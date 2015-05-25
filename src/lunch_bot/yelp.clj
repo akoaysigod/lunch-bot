@@ -42,21 +42,12 @@
         phone (result :display_phone)]
     (send/yelp-branding name url category address rating-img review-count rating)))
 
-(defn- send-single [result]
-  (send/send-attachment (parse-single result)))
+(defn respond [results description]
+  "Takes list of results and slack text object describing the results, sends http response"
+  (let [branded-results (map parse-single results)
+        flattened-branded-results (flatten branded-results)]
+    (send/send-attachment (conj flattened-branded-results description))))
 
-(defn send-multi [results]
-  (send/send-attachment(flatten (map parse-single results))))
-
-; (defn- parse-result [result]
-;   (str (result :name) " - " (first (first (result :categories))) " - " (result :url)))
-
-; (defn- send-response [user task-description results]
-;   (let [parsed-results (map parse-result results)]
-;     (->
-;       (str user " said \"" task-description "\". results:\n" (clojure.string/join "\n" parsed-results))
-;       (send/send-response))
-;       "done send-response"))
 
 (defn get-random [user task-description]
   (let [results (yelp-query :sort (rand-int 3))]
