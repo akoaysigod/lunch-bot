@@ -38,7 +38,7 @@
         review-count (result :review_count)
         food-image (result :image_url)
         category (first (first (result :categories)))
-        address (clojure.string/join " "((result :location) :display_address))
+        address (clojure.string/join " " (and (result :location) ((result :location) :display_address)))
         phone (result :display_phone)]
     (send/yelp-branding name url category address rating-img review-count rating)))
 
