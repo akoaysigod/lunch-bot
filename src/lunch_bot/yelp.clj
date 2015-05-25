@@ -48,12 +48,14 @@
         flattened-branded-results (flatten branded-results)]
     (send/send-attachment (conj flattened-branded-results description))))
 
-
-(defn get-random [user task-description]
+(defn get-random [user command]
   (let [results (yelp-query :sort (rand-int 3))]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
-      (send-single (rand-nth (results :businesses))))))
+      (let [random (rand-nth (results :businesses))]
+        (respond [random] {:fallback "lunch-bot command"
+                        :text (str user " said \"" command "\". results:\n")
+                        :color "ffffff"})))))
 
 (defn- convert-to-meters [increment units]
   (let [units (if (nil? units) "kilometers" (clojure.string/lower-case units))
@@ -114,4 +116,8 @@
   [user command text]
   (let [parsed (parse-query text)]
     (if (nil? parsed) (str "Unable to parse " text)
-    (get-by-query parsed))))
+    (let [results (get-by-query parsed)]
+      ; add user + command info to the tail of the result set before sending
+      (respond results {:fallback "lunch-bot command"
+                     :text (str user " said \"" command " " text "\". results:\n")
+                     :color "ffffff"})))))
