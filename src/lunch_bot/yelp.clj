@@ -38,31 +38,24 @@
         review-count (result :review_count)
         food-image (result :image_url)
         category (first (first (result :categories)))
-        address (clojure.string/join " "((result :location) :display_address))
+        address (clojure.string/join " " (and (result :location) ((result :location) :display_address)))
         phone (result :display_phone)]
     (send/yelp-branding name url category address rating-img review-count rating)))
 
-(defn- send-single [result]
-  (send/send-attachment (parse-single result)))
+(defn respond [results description]
+  "Takes list of results and slack text object describing the results, sends http response"
+  (let [branded-results (map parse-single results)
+        flattened-branded-results (flatten branded-results)]
+    (send/send-attachment (conj flattened-branded-results description))))
 
-(defn send-multi [results]
-  (send/send-attachment(flatten (map parse-single results))))
-
-; (defn- parse-result [result]
-;   (str (result :name) " - " (first (first (result :categories))) " - " (result :url)))
-
-; (defn- send-response [user task-description results]
-;   (let [parsed-results (map parse-result results)]
-;     (->
-;       (str user " said \"" task-description "\". results:\n" (clojure.string/join "\n" parsed-results))
-;       (send/send-response))
-;       "done send-response"))
-
-(defn get-random [user task-description]
+(defn get-random [user command]
   (let [results (yelp-query :sort (rand-int 3))]
     (if (nil? (results :businesses))
       "There was a problem. Sorry."
-      (send-single (rand-nth (results :businesses))))))
+      (let [random (rand-nth (results :businesses))]
+        (respond [random] {:fallback "lunch-bot command"
+                        :text (str user " said \"" command "\". results:\n")
+                        :color "ffffff"})))))
 
 (defn- convert-to-meters [increment units]
   (let [units (if (nil? units) "kilometers" (clojure.string/lower-case units))
@@ -117,10 +110,14 @@
     ;;^this is still pretty ugly
     (if (nil? (results :businesses))
       (str "There was a problem. " (get-in results [:error :text] "Sorry.")))
-    (send-multi (results :businesses))))
+    (results :businesses)))
 
 (defn handle-query-request
   [user command text]
   (let [parsed (parse-query text)]
     (if (nil? parsed) (str "Unable to parse " text)
-    (get-by-query parsed))))
+    (let [results (get-by-query parsed)]
+      ; add user + command info to the tail of the result set before sending
+      (respond results {:fallback "lunch-bot command"
+                     :text (str user " said \"" command " " text "\". results:\n")
+                     :color "ffffff"})))))
